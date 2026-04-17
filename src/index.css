@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@layer base {
+  :root {
+    --background: 240 10% 6%;
+    --foreground: 220 20% 92%;
+
+    --card: 240 8% 9%;
+    --card-foreground: 220 20% 92%;
+
+    --popover: 240 8% 9%;
+    --popover-foreground: 220 20% 92%;
+
+    --primary: 16 85% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 6% 14%;
+    --secondary-foreground: 220 15% 75%;
+
+    --muted: 240 6% 14%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 270 60% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 6% 16%;
+    --input: 240 6% 16%;
+    --ring: 16 85% 55%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 240 10% 5%;
+    --sidebar-foreground: 220 15% 75%;
+    --sidebar-primary: 16 85% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 6% 12%;
+    --sidebar-accent-foreground: 220 20% 92%;
+    --sidebar-border: 240 6% 14%;
+    --sidebar-ring: 16 85% 55%;
+
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+    --glow-primary: 16 85% 55%;
+    --glow-accent: 270 60% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .glow-primary {
+    box-shadow: 0 0 20px -5px hsl(var(--glow-primary) / 0.4),
+                0 0 60px -15px hsl(var(--glow-primary) / 0.2);
+  }
+  .glow-accent {
+    box-shadow: 0 0 20px -5px hsl(var(--glow-accent) / 0.4),
+                0 0 60px -15px hsl(var(--glow-accent) / 0.2);
+  }
+  .gradient-border {
+    border-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))) 1;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+}

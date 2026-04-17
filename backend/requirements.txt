@@ -1,0 +1,18 @@
+# Reddit Video Engine - Python dependencies
+# Author: Faheem Alvi <faheemalvi2000@gmail.com>
+# Install with: pip install -r backend/requirements.txt
+
+# Web server (FastAPI backend + dashboard)
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+
+# HTTP client (Reddit fetching, AI providers, TTS, publishers)
+requests>=2.31.0
+
+# Video and image processing
+moviepy==1.0.3
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Optional terminal UI for cli_app.py (graceful fallback if missing)
+rich>=13.0.0

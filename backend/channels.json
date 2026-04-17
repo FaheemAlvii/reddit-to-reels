@@ -1,0 +1,112 @@
+[
+  {
+    "name": "RedditDrama",
+    "enabled": true,
+
+    "_comment_instagram": "Instagram Graph API (optional)",
+    "instagram_user_id": "YOUR_INSTAGRAM_USER_ID",
+    "instagram_access_token": "YOUR_LONG_LIVED_ACCESS_TOKEN",
+    "app_id": "",
+    "app_secret": "",
+    "public_host": "YOUR_SERVER_PUBLIC_IP_OR_DOMAIN",
+    "file_server_port": 9123,
+
+    "_comment_youtube": "YouTube Shorts via Data API v3 (optional)",
+    "youtube": {
+      "client_id": "",
+      "client_secret": "",
+      "refresh_token": "",
+      "privacy": "public"
+    },
+
+    "_comment_tiktok": "TikTok Content Posting API (optional)",
+    "tiktok": {
+      "access_token": "",
+      "refresh_token": "",
+      "client_key": "",
+      "client_secret": "",
+      "privacy": "PUBLIC_TO_EVERYONE"
+    },
+
+    "_comment_snapchat": "Snapchat Spotlight API (optional)",
+    "snapchat": {
+      "client_id": "",
+      "client_secret": "",
+      "refresh_token": "",
+      "organization_id": ""
+    },
+
+    "discord_webhook_url": "https://discord.com/api/webhooks/YOUR_WEBHOOK",
+    "posting_interval_minutes": 240,
+    "max_posts_per_day": 4,
+    "config_overrides": {
+      "subreddits": ["AskReddit", "relationship_advice"],
+      "formatting": {
+        "default_mode": "qa",
+        "max_comments": 8,
+        "min_comment_score": 10
+      },
+      "tts": {
+        "enabled": true,
+        "main_voice": "Matthew"
+      },
+      "video": {
+        "mode": "short_reel",
+        "split_duration": 55,
+        "engine": "ffmpeg",
+        "branding": "u/RedditDrama",
+        "auto_cleanup": true
+      }
+    }
+  },
+  {
+    "name": "RedditStories",
+    "enabled": false,
+
+    "instagram_user_id": "",
+    "instagram_access_token": "",
+
+    "youtube": {
+      "client_id": "",
+      "client_secret": "",
+      "refresh_token": "",
+      "privacy": "public"
+    },
+
+    "tiktok": {
+      "access_token": "",
+      "refresh_token": "",
+      "client_key": "",
+      "client_secret": ""
+    },
+
+    "snapchat": {
+      "client_id": "",
+      "client_secret": "",
+      "refresh_token": "",
+      "organization_id": ""
+    },
+
+    "discord_webhook_url": "",
+    "posting_interval_minutes": 360,
+    "max_posts_per_day": 3,
+    "config_overrides": {
+      "subreddits": ["tifu", "confessions", "TrueOffMyChest"],
+      "formatting": {
+        "default_mode": "story",
+        "max_comments": 0
+      },
+      "tts": {
+        "enabled": true,
+        "main_voice": "Brian"
+      },
+      "video": {
+        "mode": "short_reel",
+        "split_duration": 58,
+        "engine": "ffmpeg",
+        "branding": "u/RedditStories",
+        "auto_cleanup": true
+      }
+    }
+  }
+]

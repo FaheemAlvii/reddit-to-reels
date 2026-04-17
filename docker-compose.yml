@@ -1,0 +1,19 @@
+# Reddit Video Engine
+# Author: Faheem Alvi <faheemalvi2000@gmail.com>
+
+services:
+  reddit-video-engine:
+    build: .
+    container_name: reddit-video-engine
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./posts:/app/posts
+      - ./videos:/app/videos
+      - ./backgrounds:/app/backgrounds
+      - ./audio:/app/audio
+      - ./config.json:/app/config.json
+      - ./channels.json:/app/channels.json
+    environment:
+      - PYTHONUNBUFFERED=1
