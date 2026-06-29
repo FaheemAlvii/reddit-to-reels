@@ -2,13 +2,21 @@
 
 Open source tool to generate vertical short videos from Reddit posts or AI generated scripts. Renders with FFmpeg, narrates with TTS, and can publish to YouTube Shorts, TikTok, Instagram Reels, and Snapchat Spotlight.
 
+> **⚠️ Important Notice — June 29, 2026**
+>
+> Reddit no longer allows Python `requests` library (even with custom headers) and returns 403 errors. To fetch Reddit content, you must:
+> - Use **browser automation with Playwright** to simulate real browser traffic, or
+> - Implement a **Reddit-authenticated API client** using Reddit's official OAuth 2.0 API with proper credentials.
+>
+> The current Reddit fetching code will not work without these changes. PRs implementing either solution are welcome.
+
 > **Maintenance Notice**
 >
-> This repository is **not actively maintained**. It works at the time of writing and may receive occasional updates when time permits. Pull requests are welcome but reviews can be slow. For paid features or guaranteed support see the contact section below.
+> This repository is **not actively maintained**. It works at the time of writing and may receive occasional updates when time permits. Pull requests are welcome but reviews can be slow. For paid features or commercial use, contact the author.
 
 ## What it does
 
-Reddit Video Engine fetches content from Reddit or generates original scripts using a configured AI provider, converts the text to speech, and renders a vertical 1080x1920 short video with synchronized subtitles and a background clip. It includes a web dashboard, a CLI for terminals (including A-Shell on iOS), and a desktop build for Windows.
+Reddit Video Engine fetches content from Reddit or generates original scripts using a configured AI provider, converts the text to speech, and renders a vertical 1080x1920 short video with synchronized subtitles and background clip.
 
 ## Features
 
@@ -207,7 +215,7 @@ All publishing modules are implemented but **not end to end tested by the author
 
 * **YouTube Shorts** — Requires Google Cloud OAuth 2.0 credentials. See `backend/src/youtube_publisher.py` and the [YouTube Data API v3 docs](https://developers.google.com/youtube/v3).
 * **TikTok** — Requires a TikTok Developer App approved for the Content Posting API. See [TikTok Content Posting API](https://developers.tiktok.com/doc/content-posting-api-get-started).
-* **Instagram Reels** — Requires a Facebook App with `instagram_content_publish` permission and a Business or Creator account. See [Instagram Graph API](https://developers.facebook.com/docs/instagram-api).
+* **Instagram Reels** — Requires a Facebook App with `instagram_content_publish` permission and a Business or Creator account. See [Instagram Graph API](https://developers.facebook.com/docs/instagram/apis).
 * **Snapchat Spotlight** — Requires Snap Kit approval. See [Snap Marketing API](https://developers.snap.com/api/marketing-api/Spotlight).
 
 Credentials for each platform go in `channels.json` per channel.
@@ -302,7 +310,7 @@ What works on iOS:
 
 | Feature                | Status                                |
 | ---------------------- | ------------------------------------- |
-| Fetch Reddit posts     | Yes (needs `requests`)                |
+| Fetch Reddit posts     | Yes (needs `requests`) — **See notice above** |
 | Format / script gen    | Yes                                   |
 | TTS (Streamlabs cloud) | Yes (needs network)                   |
 | Video render (FFmpeg)  | Yes (A-Shell bundles FFmpeg)          |
@@ -378,15 +386,23 @@ Run `docker compose up -d --build`. The dashboard and API are served on port 800
 
 ### Do the social media publishers actually work?
 
-The code is implemented for YouTube Shorts, TikTok, Instagram Reels, and Snapchat Spotlight, but the author has not personally completed end to end uploads on a live account. Expect to debug platform credentials and edge cases. Local MP4 output and Discord notifications are tested and working.
+The code is implemented for YouTube Shorts, TikTok, Instagram Reels, and Snapchat Spotlight, but the author has not personally completed end to end uploads on a live account. Expect to debug platform-specific auth and upload limits.
 
 ### What content modes are available?
 
-Four modes: `story` (first person Reddit narratives), `qa` (question and answer hooks), `interactive` ("put a finger down" challenges), and `hottake` (controversial opinions). Each is documented in the Configuration Guide above.
+Four modes: `story` (first person Reddit narratives), `qa` (question and answer hooks), `interactive` ("put a finger down" challenges), and `hottake` (controversial opinions). Each is documented in the Content Modes section.
+
+### How do I fetch Reddit posts if the current method is blocked?
+
+Reddit blocks standard Python `requests` library. You must use:
+1. **Playwright browser automation** — Simulates a real browser, bypasses 403 blocks
+2. **Reddit API with OAuth 2.0** — Use Reddit's official authenticated API with registered app credentials
+
+PRs implementing either approach are welcome. See the Important Notice at the top of this README.
 
 ## License
 
-Licensed under **CC BY-NC 4.0** (Creative Commons Attribution NonCommercial 4.0). You may use, modify, and share this project for personal, educational, and non-commercial purposes. Selling, reselling, or using this project as part of a commercial product or paid service is not permitted without a separate written agreement. See [LICENSE](LICENSE).
+Licensed under **CC BY-NC 4.0** (Creative Commons Attribution NonCommercial 4.0). You may use, modify, and share this project for personal, educational, and non-commercial purposes. Selling, reselling, or using for commercial services is prohibited. See the LICENSE file for details.
 
 ## Author and Contact
 
@@ -400,4 +416,4 @@ Open to collaboration, freelance projects, and paid work in Python, FastAPI, Rea
 
 ## Disclaimer
 
-This project is provided for educational and personal use. You are responsible for following the terms of service of any platform you publish to (YouTube, TikTok, Instagram, Snapchat, Reddit) and for the content you create with it.
+This project is provided for educational and personal use. You are responsible for following the terms of service of any platform you publish to (YouTube, TikTok, Instagram, Snapchat, Reddit) and for ensuring all content generated complies with applicable laws and community guidelines.
