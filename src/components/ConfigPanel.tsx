@@ -1,4 +1,4 @@
-import { Settings2, Plus, X, Loader2, Save, Sparkles, Zap, CheckCircle2, XCircle } from "lucide-react";
+import { Settings2, Plus, X, Loader2, Save, Bot, Zap, CheckCircle2, XCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -241,7 +241,7 @@ export function ConfigPanel() {
         {/* AI Hooks */}
         <div className="space-y-4">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3" />
+            <Bot className="h-3 w-3" />
             AI Hooks
           </Label>
 

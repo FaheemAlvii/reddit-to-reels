@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, RefreshCw, Loader2, Play, Filter, ArrowUpDown, ExternalLink, CheckCircle2, XCircle, AlertTriangle, Flame, TrendingUp, Clock, Star, Trophy } from "lucide-react";
+import { Search, RefreshCw, Loader2, Play, Filter, ArrowUpDown, ExternalLink, CheckCircle2, XCircle, AlertTriangle, Flame, TrendingUp, Clock, Star, Trophy, AlertCircle, Clapperboard, Globe, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import { GenerateFromUrlDialog } from "@/components/GenerateFromUrlDialog";
 import { GenerateFromCustomDialog } from "@/components/GenerateFromCustomDialog";
 import { CommentSelectionDialog } from "@/components/CommentSelectionDialog";
 import type { RedditPost } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const REDDIT_SORTS = [
   { id: "hot", label: "Hot", icon: Flame },
@@ -29,12 +32,36 @@ function formatAge(hours: number): string {
 }
 
 export default function PostsPage() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [redditSort, setRedditSort] = useState<RedditSort>("hot");
   const { data, refetch, isFetching, isError, error } = useDiscoverPosts(redditSort);
   const [selectedPost, setSelectedPost] = useState<RedditPost | null>(null);
   const [search, setSearch] = useState("");
   const [filterEligible, setFilterEligible] = useState(false);
   const [sortBy, setSortBy] = useState<"score" | "comments" | "age">("score");
+
+  const [warming, setWarming] = useState(false);
+  const [sessionInfo, setSessionInfo] = useState<{ valid?: boolean; cookie_count?: number; warmed_at?: string; reason?: string } | null>(null);
+
+  useEffect(() => {
+    api.getRedditSessionStatus().then(setSessionInfo).catch(() => {});
+  }, []);
+
+  const handleWarmup = async () => {
+    setWarming(true);
+    try {
+      const res = await api.warmupRedditSession(true);
+      toast({ title: "Playwright Session Warmed", description: res.message });
+      const info = await api.getRedditSessionStatus();
+      setSessionInfo(info);
+      refetch();
+    } catch (e: any) {
+      toast({ title: "Warmup Failed", description: e.message, variant: "destructive" });
+    } finally {
+      setWarming(false);
+    }
+  };
 
   const posts = data?.posts ?? [];
 
@@ -57,11 +84,60 @@ export default function PostsPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5">
+      {/* Playwright Session Status Alert Notice */}
+      <div className="rounded-xl border border-primary/20 bg-secondary/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-start gap-2.5">
+          <Globe className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-foreground">Playwright Reddit Session Warmer:</span>
+              {sessionInfo?.valid ? (
+                <Badge variant="default" className="text-[9px] bg-green-500/20 text-green-400 border-green-500/30 gap-1 py-0">
+                  <ShieldCheck className="h-3 w-3 text-green-400" /> Session Active ({sessionInfo.cookie_count} cookies)
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[9px] border-warning text-warning py-0">
+                  {sessionInfo?.reason || "Session Needs Warmup"}
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground text-[11px]">
+              Launches headless Playwright browser to visit Reddit, collect cookies & User-Agent header to bypass 403 blocks.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleWarmup}
+            disabled={warming}
+            className="text-xs gap-1.5 h-8 border-primary/30 hover:border-primary/60"
+          >
+            {warming ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" /> : <Globe className="h-3.5 w-3.5 text-primary" />}
+            {warming ? "Warming Session..." : "Warm Up Session"}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => navigate("/studio")}
+            className="glow-primary text-xs gap-1.5 h-8"
+          >
+            <Clapperboard className="h-3.5 w-3.5" />
+            Open Studio
+          </Button>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold">Post Discovery</h2>
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            Reddit Import
+            <Badge variant="outline" className="text-[10px] text-muted-foreground font-normal">
+              Legacy / Optional
+            </Badge>
+          </h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Scan configured subreddits for eligible posts
+            Scan subreddits for eligible posts
             {posts.length > 0 && (
               <span> — {eligible} eligible of {posts.length} total</span>
             )}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Sparkles, ArrowRight, ArrowLeft, Play, Loader2,
+  Bot, ArrowRight, ArrowLeft, Play, Loader2,
   Film, Scissors, Mic, MicOff, BookOpen, MessageSquare,
   Gamepad2, Flame, HandMetal, HelpCircle, Star, Brain,
 } from "lucide-react";
@@ -301,7 +301,7 @@ export function GenerateWithAIDialog() {
               <ArrowLeft className="h-3.5 w-3.5" /> Back
             </Button>
             <Button onClick={handleSubmit} disabled={submitting} className="flex-1 gap-2 glow-accent">
-              {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+              {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bot className="h-3.5 w-3.5" />}
               Generate
             </Button>
           </div>
@@ -315,15 +315,15 @@ export function GenerateWithAIDialog() {
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 border-accent/30 hover:border-accent/60 hover:bg-accent/5">
-          <Sparkles className="h-4 w-4 text-accent" />
+        <Button variant="outline" className="gap-2 border-accent/30 hover:border-accent/60 hover:bg-accent/5 text-xs">
+          <Bot className="h-4 w-4 text-accent" />
           Generate with AI
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-sm flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-accent" />
+            <Bot className="h-4 w-4 text-accent" />
             AI Content Generator
             <span className="text-[10px] text-muted-foreground font-normal ml-auto">
               Step {step + 1} of {totalSteps}

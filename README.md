@@ -1,22 +1,17 @@
-# Reddit Video Engine
+# Text2Reel Studio
 
-Open source tool to generate vertical short videos from Reddit posts or AI generated scripts. Renders with FFmpeg, narrates with TTS, and can publish to YouTube Shorts, TikTok, Instagram Reels, and Snapchat Spotlight.
+Generate vertical short reels from custom text scripts, manual stories, AI prompts, and text imports. Narrates with multi-speaker TTS, synchronizes subtitles, renders video with FFmpeg, and optionally publishes to YouTube Shorts, TikTok, Instagram Reels, and Snapchat Spotlight.
 
-> **⚠️ Important Notice — June 29, 2026**
+> **💡 Primary Usage — Text to Reels & AI Stories**
 >
-> Reddit no longer allows Python `requests` library (even with custom headers) and returns 403 errors. To fetch Reddit content, you must:
-> - Use **browser automation with Playwright** to simulate real browser traffic, or
-> - Implement a **Reddit-authenticated API client** using Reddit's official OAuth 2.0 API with proper credentials.
->
-> The current Reddit fetching code will not work without these changes. PRs implementing either solution are welcome.
-
-> **Maintenance Notice**
->
-> This repository is **not actively maintained**. It works at the time of writing and may receive occasional updates when time permits. Pull requests are welcome but reviews can be slow. For paid features or commercial use, contact the author.
+> **Text2Reel Studio** focuses on **Text-to-Reels primary creation**:
+> - **Manual Story & Script Studio**: Write or paste custom stories, scripts, and Q&A threads with speaker controls.
+> - **AI Story Generator**: Produce confessional dramas, AskReddit-style Q&A, interactive "put a finger down" challenges, and hot takes using Gemini, OpenRouter, Ollama, or Nvidia NIM.
+> - **Reddit Session Warmer (Playwright / Camoufox)**: Built-in automated browser session warmer bypasses Reddit's 403 anti-bot blocks by visiting Reddit via Playwright, capturing valid session cookies + User-Agent, and reusing them for Python requests.
 
 ## What it does
 
-Reddit Video Engine fetches content from Reddit or generates original scripts using a configured AI provider, converts the text to speech, and renders a vertical 1080x1920 short video with synchronized subtitles and background clip.
+Text2Reel Studio turns text scripts or AI-generated story prompts into vertical 1080x1920 short videos with synchronized captions, multi-voice narration, background footage, and optional social channel publishing.
 
 ## Features
 
@@ -73,6 +68,7 @@ pnpm dev
 python3.11 -m venv .venv
 source .venv/bin/activate            # Windows: .\.venv\Scripts\activate
 pip install -r backend/requirements.txt
+playwright install chromium          # Installs headless browser for session warming
 uvicorn api_server:app --app-dir backend/src --reload --port 8000
 ```
 
@@ -392,13 +388,13 @@ The code is implemented for YouTube Shorts, TikTok, Instagram Reels, and Snapcha
 
 Four modes: `story` (first person Reddit narratives), `qa` (question and answer hooks), `interactive` ("put a finger down" challenges), and `hottake` (controversial opinions). Each is documented in the Content Modes section.
 
-### How do I fetch Reddit posts if the current method is blocked?
+### How do I bypass Reddit's 403 Forbidden blocking?
 
-Reddit blocks standard Python `requests` library. You must use:
-1. **Playwright browser automation** — Simulates a real browser, bypasses 403 blocks
-2. **Reddit API with OAuth 2.0** — Use Reddit's official authenticated API with registered app credentials
-
-PRs implementing either approach are welcome. See the Important Notice at the top of this README.
+Reddit blocks basic Python `requests` library user agents. **Text2Reel Studio** includes an automated **Playwright Session Warmer** (`backend/src/reddit_session_warmer.py`):
+1. **Headless Browser Visit**: Launches Playwright (Chromium/Camoufox) to visit Reddit and capture valid session cookies + User-Agent header.
+2. **Cookie Persistence**: Saves session data to `reddit_session.json`.
+3. **Automated Auto-Retry**: Requests pipeline populates `requests.Session` with the saved cookies and automatically re-warms the session if a 403/429 error occurs.
+4. **Dashboard Control**: Click "Warm Up Session" on the Dashboard or Reddit Import page to manually refresh browser session cookies anytime.
 
 ## License
 

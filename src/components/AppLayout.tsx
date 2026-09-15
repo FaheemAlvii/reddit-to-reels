@@ -1,12 +1,13 @@
 import { NavLink } from "react-router-dom";
-import { Video, LayoutDashboard, Newspaper, Settings2, Film } from "lucide-react";
+import { Video, LayoutDashboard, Clapperboard, Newspaper, Settings2, Film } from "lucide-react";
 import { useHealth } from "@/hooks/use-api";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/posts", label: "Posts", icon: Newspaper },
-  { to: "/videos", label: "Videos", icon: Film },
+  { to: "/studio", label: "Story Studio", icon: Clapperboard, highlight: true },
+  { to: "/videos", label: "Reels Gallery", icon: Film },
+  { to: "/posts", label: "Reddit Import", icon: Newspaper },
   { to: "/config", label: "Configuration", icon: Settings2 },
 ];
 
@@ -24,8 +25,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <Video className="h-4 w-4 text-primary" />
               </div>
               <h1 className="text-lg font-bold tracking-tight">
-                <span className="text-gradient">Reddit</span>
-                <span className="text-foreground"> Video Engine</span>
+                <span className="text-gradient">Text2Reel</span>
+                <span className="text-foreground"> Studio</span>
               </h1>
             </NavLink>
 
@@ -37,10 +38,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   end={item.to === "/"}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                      "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all",
                       isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                        ? item.highlight
+                          ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                          : "bg-primary/10 text-primary"
+                        : item.highlight
+                          ? "text-primary hover:bg-primary/10 border border-primary/20"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                     )
                   }
                 >

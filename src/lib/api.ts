@@ -279,10 +279,12 @@ export const api = {
       body: JSON.stringify(params),
     }),
 
-  // Resume video from audio-only post
-  resumeVideo: (post_id: string) =>
-    request<{ started: boolean }>("/api/pipeline/resume-video", {
+  // Reddit Session Warmer
+  getRedditSessionStatus: () =>
+    request<{ exists: boolean; valid: boolean; warmed_at?: string; age_hours?: number; cookie_count?: number; user_agent?: string; reason?: string }>("/api/reddit/status"),
+  warmupRedditSession: (force: boolean = true) =>
+    request<{ success: boolean; message: string; session: unknown }>("/api/reddit/warmup", {
       method: "POST",
-      body: JSON.stringify({ post_id }),
+      body: JSON.stringify({ force }),
     }),
 };

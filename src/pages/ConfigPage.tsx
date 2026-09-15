@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Settings2, Save, Loader2, Plus, X, RotateCcw,
   MessageSquare, Mic, Film, FolderOutput, Bell,
-  Download, CheckCircle2, XCircle, RefreshCw, Cpu, Sparkles, Zap
+  Download, CheckCircle2, XCircle, RefreshCw, Cpu, Bot, Zap
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -799,7 +799,7 @@ export default function ConfigPage() {
         </Section>
 
         {/* AI Hooks */}
-        <Section title="AI Hooks" icon={<Sparkles className="h-4 w-4 text-primary" />}>
+        <Section title="AI Hooks" icon={<Bot className="h-4 w-4 text-primary" />}>
           <div className="rounded-md bg-secondary/50 border border-border p-3">
             <p className="text-[10px] text-muted-foreground leading-relaxed">
               <strong className="text-foreground">How it works:</strong> AI generates a 3-4 second attention-grabbing hook prepended to the video narration, plus curiosity-driven thumbnail text — all without spoiling the story.

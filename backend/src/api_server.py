@@ -295,7 +295,7 @@ async def lifespan(app: FastAPI):
 
 
 # ── App ──────────────────────────────────────────────────────────────
-app = FastAPI(title="Reddit Video Engine API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Text2Reel Studio API", version="1.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 
@@ -363,6 +363,26 @@ async def update_config(update: dict):
     _save_config(config)
     _log("Config updated")
     return {"success": True, "config": config}
+
+
+@app.get("/api/reddit/status")
+async def reddit_session_status():
+    from reddit_session_warmer import get_session_warmer
+    warmer = get_session_warmer()
+    return warmer.get_session_info()
+
+
+@app.post("/api/reddit/warmup")
+async def reddit_session_warmup(req: dict = {}):
+    force = req.get("force", True)
+    from reddit_session_warmer import get_session_warmer
+    warmer = get_session_warmer()
+    success, message = await asyncio.to_thread(warmer.warmup_session, force_refresh=force)
+    if not success:
+        raise HTTPException(502, f"Reddit session warmup failed: {message}")
+    info = warmer.get_session_info()
+    _log(f"Reddit session warmed up: {message}")
+    return {"success": True, "message": message, "session": info}
 
 
 @app.get("/api/posts/discover")
