@@ -1,4 +1,4 @@
-import { Search, FileText, Mic, Film, Send, XCircle, Sparkles, Image } from "lucide-react";
+import { Search, FileText, Mic, Film, Send, XCircle, Bot, Image } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PipelineStep } from "./PipelineStep";
@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { StepStatus } from "./PipelineStep";
 
 const STEP_ICONS: Record<string, React.ReactNode> = {
-  ai_generate: <Sparkles className="h-5 w-5" />,
+  ai_generate: <Bot className="h-5 w-5" />,
   fetch: <Search className="h-5 w-5" />,
   format: <FileText className="h-5 w-5" />,
   tts: <Mic className="h-5 w-5" />,

@@ -34,3 +34,6 @@ config.json
 videos/
 models/
 build/
+backend/reddit_session.json
+pnpm-lock.yaml
+pnpm-lock.yaml

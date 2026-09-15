@@ -16,6 +16,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 
 
+from reddit_session_warmer import get_session_warmer
+
+
 if getattr(sys, "frozen", False):
     PROJECT_ROOT = os.path.dirname(sys.executable)
 else:
@@ -32,9 +35,7 @@ class RedditStoryMaker:
         self.config_path = os.path.join(PROJECT_ROOT, config_filename)
         self.config = self._load_config(self.config_path)
         self.used_posts = self._load_used_posts()
-        self.headers = {
-            'User-Agent': 'RedditStoryMaker/1.0'
-        }
+        self.session_warmer = get_session_warmer()
         
     def _load_config(self, config_path: str) -> Dict:
         """Load configuration from JSON file."""
@@ -68,9 +69,16 @@ class RedditStoryMaker:
         print(f"✓ Updated used posts list: {len(self.used_posts)} posts tracked")
     
     def _fetch_json(self, url: str) -> Optional[Dict]:
-        """Fetch JSON data from a URL with error handling."""
+        """Fetch JSON data from a URL using Playwright cookie-backed session with 403 auto-retry."""
+        session, _ = self.session_warmer.get_requests_session()
         try:
-            response = requests.get(url, headers=self.headers, timeout=10)
+            response = session.get(url, timeout=12)
+            if response.status_code in (403, 429):
+                print(f"⚠️ Reddit returned {response.status_code} for {url}. Auto-refreshing session with Playwright...")
+                self.session_warmer.invalidate_session()
+                session, _ = self.session_warmer.get_requests_session(force_refresh=True)
+                response = session.get(url, timeout=15)
+            
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
