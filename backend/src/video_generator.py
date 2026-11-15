@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Video Generator for Reddit Story Maker.
 Combines audio segments with background video and synchronized subtitles.
@@ -12,7 +13,7 @@ import os
 import sys
 import random
 import textwrap
-from typing import List, Optional
+from typing import List, Optional, Any
 
 # --- Graceful moviepy / PIL imports for A-Shell / iOS compatibility ---
 MOVIEPY_AVAILABLE = False
@@ -27,8 +28,16 @@ try:
         concatenate_audioclips, TextClip, ColorClip, vfx
     )
     MOVIEPY_AVAILABLE = True
-except ImportError:
-    pass  # moviepy/numpy not available – FFmpeg-only mode
+except (ImportError, Exception):
+    VideoFileClip = Any  # type: ignore
+    AudioFileClip = Any  # type: ignore
+    ImageClip = Any  # type: ignore
+    CompositeVideoClip = Any  # type: ignore
+    concatenate_audioclips = Any  # type: ignore
+    TextClip = Any  # type: ignore
+    ColorClip = Any  # type: ignore
+    vfx = Any  # type: ignore
+    MOVIEPY_AVAILABLE = False
 
 try:
     from PIL import Image, ImageDraw, ImageFont
@@ -179,7 +188,7 @@ class VideoGenerator:
         
         return temp_file.name
 
-    def get_random_background(self, duration: float) -> VideoFileClip:
+    def get_random_background(self, duration: float) -> Any:
         """
         Get a random background clip of appropriate duration and aspect ratio.
         """

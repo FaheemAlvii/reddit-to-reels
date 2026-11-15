@@ -36,6 +36,12 @@ class RedditStoryMaker:
         self.config = self._load_config(self.config_path)
         self.used_posts = self._load_used_posts()
         self.session_warmer = get_session_warmer()
+
+    @property
+    def scraping_method(self) -> str:
+        """Get the configured scraping method ('auto', 'browser', 'json')."""
+        method = self.config.get('scraping_method') or self.config.get('reddit', {}).get('scraping_method', 'auto')
+        return str(method).lower()
         
     def _load_config(self, config_path: str) -> Dict:
         """Load configuration from JSON file."""
@@ -127,8 +133,10 @@ class RedditStoryMaker:
     def fetch_subreddit_posts(self, subreddit: str = None, limit: int = 25, sort: str = "hot") -> List[Dict]:
         """
         Fetch posts from the configured subreddit.
-        Returns list of post data dictionaries.
-        sort: one of 'best', 'hot', 'new', 'rising', 'top'
+        Supports:
+        - "browser": Direct browser scraping (bypasses .json endpoints).
+        - "json": JSON endpoint only.
+        - "auto": Tries JSON endpoint first; automatically falls back to browser scraper if blocked or failed.
         """
         if not subreddit:
             # Fallback for backward compatibility or default
@@ -137,26 +145,53 @@ class RedditStoryMaker:
         valid_sorts = ["best", "hot", "new", "rising", "top"]
         if sort not in valid_sorts:
             sort = "hot"
+
+        method = self.scraping_method
+
+        # 1. Direct browser scraping (no .json)
+        if method in ("browser", "playwright", "html", "no_json"):
+            print(f"\n[Browser Scraper] Fetching posts from r/{subreddit} (no .json)...")
+            try:
+                from reddit_browser_scraper import scrape_subreddit_posts
+                posts = scrape_subreddit_posts(subreddit=subreddit, sort=sort, limit=limit)
+                print(f"✓ Retrieved {len(posts)} posts from subreddit via browser scraper")
+                return posts
+            except Exception as e:
+                print(f"✗ Browser scraper failed: {e}")
+                return []
             
+        # 2. Try JSON endpoint
         url = f"https://www.reddit.com/r/{subreddit}/{sort}.json?limit={limit}"
         if sort == "top":
             url += "&t=week"
         
-        print(f"\nFetching posts from r/{subreddit}...")
+        print(f"\nFetching posts from r/{subreddit} via JSON API...")
         data = self._fetch_json(url)
         
-        if not data:
-            return []
-        
         posts = []
-        children = data.get('data', {}).get('children', [])
+        if data:
+            children = data.get('data', {}).get('children', [])
+            for child in children:
+                if child.get('kind') == 't3':  # t3 = post
+                    posts.append(child.get('data', {}))
         
-        for child in children:
-            if child.get('kind') == 't3':  # t3 = post
-                posts.append(child.get('data', {}))
+        if posts:
+            print(f"✓ Retrieved {len(posts)} posts from subreddit via JSON")
+            return posts
+
+        # 3. Fallback to browser scraper if JSON failed and method is 'auto' (or fallback)
+        if method in ("auto", "fallback"):
+            print(f"⚠️ JSON endpoint failed or returned 0 posts for r/{subreddit}. Falling back to browser scraper (non-.json)...")
+            try:
+                from reddit_browser_scraper import scrape_subreddit_posts
+                fallback_posts = scrape_subreddit_posts(subreddit=subreddit, sort=sort, limit=limit)
+                if fallback_posts:
+                    print(f"✓ Retrieved {len(fallback_posts)} posts from r/{subreddit} via fallback browser scraper")
+                    return fallback_posts
+            except Exception as e:
+                print(f"✗ Fallback browser scraper failed: {e}")
         
-        print(f"✓ Retrieved {len(posts)} posts from subreddit")
-        return posts
+        return []
     
     def find_suitable_post(self) -> Optional[Dict]:
         """
@@ -212,18 +247,49 @@ class RedditStoryMaker:
         """
         Fetch detailed post data including comments.
         Returns [post_data, comments_data] or None.
+        Supports:
+        - "browser": Direct browser scraping (bypasses .json endpoints).
+        - "json": JSON endpoint only.
+        - "auto": Tries JSON endpoint first; automatically falls back to browser scraper if blocked or failed.
         """
-        # Ensure URL ends with .json
-        if not post_url.endswith('.json'):
-            post_url = post_url.rstrip('/') + '/.json'
+        method = self.scraping_method
+
+        # 1. Direct browser scraping (no .json)
+        if method in ("browser", "playwright", "html", "no_json"):
+            print(f"\n[Browser Scraper] Fetching post details (no .json)...")
+            try:
+                from reddit_browser_scraper import scrape_post_details
+                clean_url = post_url.replace('/.json', '').replace('.json', '')
+                return scrape_post_details(clean_url)
+            except Exception as e:
+                print(f"✗ Browser scraper failed: {e}")
+                return None
+
+        # 2. Try JSON endpoint
+        json_url = post_url
+        if not json_url.endswith('.json'):
+            json_url = json_url.rstrip('/') + '/.json'
         
-        print(f"\nFetching post details...")
-        data = self._fetch_json(post_url)
+        print(f"\nFetching post details via JSON API...")
+        data = self._fetch_json(json_url)
         
         if data and isinstance(data, list) and len(data) >= 2:
-            print(f"Retrieved post details with comments")
+            print(f"Retrieved post details with comments via JSON")
             return data
         
+        # 3. Fallback to browser scraper if JSON failed and method is 'auto' (or fallback)
+        if method in ("auto", "fallback"):
+            print(f"⚠️ JSON endpoint failed for post details. Falling back to browser scraper (non-.json)...")
+            try:
+                from reddit_browser_scraper import scrape_post_details
+                clean_url = post_url.replace('/.json', '').replace('.json', '')
+                fallback_data = scrape_post_details(clean_url)
+                if fallback_data and isinstance(fallback_data, list) and len(fallback_data) >= 2:
+                    print(f"✓ Retrieved post details with comments via fallback browser scraper")
+                    return fallback_data
+            except Exception as e:
+                print(f"✗ Fallback browser scraper failed: {e}")
+
         print(f"Failed to retrieve post details")
         return None
     

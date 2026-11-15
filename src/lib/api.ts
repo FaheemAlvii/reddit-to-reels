@@ -127,6 +127,7 @@ export interface TtsProvider extends TtsProviderStatus {
 export interface FullConfig {
   subreddits: string[];
   request_delay: number;
+  scraping_method?: "auto" | "browser" | "json";
   filters: {
     min_upvotes: number;
     min_comments: number;
@@ -281,7 +282,7 @@ export const api = {
 
   // Reddit Session Warmer
   getRedditSessionStatus: () =>
-    request<{ exists: boolean; valid: boolean; warmed_at?: string; age_hours?: number; cookie_count?: number; user_agent?: string; reason?: string }>("/api/reddit/status"),
+    request<{ exists: boolean; valid: boolean; warmed_at?: string; age_hours?: number; cookie_count?: number; user_agent?: string; reason?: string; scraping_method?: string }>("/api/reddit/status"),
   warmupRedditSession: (force: boolean = true) =>
     request<{ success: boolean; message: string; session: unknown }>("/api/reddit/warmup", {
       method: "POST",

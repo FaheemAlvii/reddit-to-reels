@@ -97,6 +97,7 @@ export default function ConfigPage() {
   const [subreddits, setSubreddits] = useState<string[]>([]);
   const [newSub, setNewSub] = useState("");
   const [requestDelay, setRequestDelay] = useState(2);
+  const [scrapingMethod, setScrapingMethod] = useState("auto");
 
   // Filters
   const [minUpvotes, setMinUpvotes] = useState(500);
@@ -181,6 +182,7 @@ export default function ConfigPage() {
     const c = config as FullConfig;
     setSubreddits(c.subreddits ?? []);
     setRequestDelay(c.request_delay ?? 2);
+    setScrapingMethod(c.scraping_method ?? (c as any).reddit?.scraping_method ?? "auto");
 
     const f = c.filters ?? {} as FullConfig["filters"];
     setMinUpvotes(f.min_upvotes ?? 500);
@@ -270,6 +272,7 @@ export default function ConfigPage() {
       {
         subreddits,
         request_delay: requestDelay,
+        scraping_method: scrapingMethod,
         filters: {
           min_upvotes: minUpvotes,
           min_comments: minComments,
@@ -398,6 +401,32 @@ export default function ConfigPage() {
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Request Delay (seconds)</Label>
             <Input type="number" value={requestDelay} onChange={(e) => setRequestDelay(+e.target.value)} className="h-8 text-xs bg-secondary border-border" step={0.5} min={0} />
+          </div>
+          <div className="space-y-1.5 pt-1">
+            <Label className="text-xs text-muted-foreground">Reddit Scraping Method</Label>
+            <Select value={scrapingMethod} onValueChange={setScrapingMethod}>
+              <SelectTrigger className="h-8 text-xs bg-secondary border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto" className="text-xs">
+                  Auto (JSON with Browser Fallback) — Recommended
+                </SelectItem>
+                <SelectItem value="browser" className="text-xs">
+                  Browser Scraper / No .json (Playwright)
+                </SelectItem>
+                <SelectItem value="json" className="text-xs">
+                  JSON API (.json endpoints only)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {scrapingMethod === "browser"
+                ? "Bypasses Reddit's 403 blocks by scraping post pages directly with a headless browser, completely avoiding .json endpoints."
+                : scrapingMethod === "auto"
+                ? "Tries Reddit's .json endpoints first, then automatically falls back to headless browser scraping if blocked or empty."
+                : "Strictly calls Reddit's .json endpoints (may fail with 403 Forbidden without session cookies)."}
+            </p>
           </div>
         </Section>
 

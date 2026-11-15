@@ -100,6 +100,16 @@ export default function PostsPage() {
                   {sessionInfo?.reason || "Session Needs Warmup"}
                 </Badge>
               )}
+              {sessionInfo?.scraping_method && (
+                <Badge
+                  variant="secondary"
+                  className="text-[9px] font-mono cursor-pointer hover:bg-secondary/80 transition-colors"
+                  onClick={() => navigate("/config")}
+                  title="Configured Reddit scraping method. Click to change in Settings."
+                >
+                  Scraper: {sessionInfo.scraping_method === "browser" ? "Browser (No .json)" : sessionInfo.scraping_method === "json" ? "JSON API" : "Auto Fallback"}
+                </Badge>
+              )}
             </div>
             <p className="text-muted-foreground text-[11px]">
               Launches headless Playwright browser to visit Reddit, collect cookies & User-Agent header to bypass 403 blocks.

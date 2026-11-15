@@ -50,6 +50,7 @@ export function ConfigPanel() {
   const { toast } = useToast();
 
   const [subreddits, setSubreddits] = useState<string[]>([]);
+  const [scrapingMethod, setScrapingMethod] = useState("auto");
   const [minUpvotes, setMinUpvotes] = useState(500);
   const [minComments, setMinComments] = useState(10);
   const [maxComments, setMaxComments] = useState(500);
@@ -76,6 +77,7 @@ export function ConfigPanel() {
   useEffect(() => {
     if (config) {
       setSubreddits(config.subreddits ?? []);
+      setScrapingMethod(config.scraping_method ?? (config as any).reddit?.scraping_method ?? "auto");
       setMinUpvotes(config.filters?.min_upvotes ?? 500);
       setMinComments(config.filters?.min_comments ?? 10);
       setMaxComments(config.filters?.max_comments ?? 500);
@@ -113,6 +115,7 @@ export function ConfigPanel() {
     updateMutation.mutate(
       {
         subreddits,
+        scraping_method: scrapingMethod,
         filters: {
           min_upvotes: minUpvotes,
           min_comments: minComments,
@@ -186,6 +189,21 @@ export function ConfigPanel() {
             <Button size="sm" variant="outline" onClick={addSubreddit} className="h-8 px-2">
               <Plus className="h-3.5 w-3.5" />
             </Button>
+          </div>
+
+          {/* Scraping Method */}
+          <div className="space-y-1.5 pt-1">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Scraping Method</Label>
+            <Select value={scrapingMethod} onValueChange={setScrapingMethod}>
+              <SelectTrigger className="h-8 text-xs bg-secondary border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto" className="text-xs">Auto (JSON + Browser Fallback)</SelectItem>
+                <SelectItem value="browser" className="text-xs">Browser Scraper / No .json (Playwright)</SelectItem>
+                <SelectItem value="json" className="text-xs">JSON API (.json endpoints)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

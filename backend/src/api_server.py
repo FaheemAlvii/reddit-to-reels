@@ -26,6 +26,12 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
+if sys.platform == "win32":
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    except Exception:
+        pass
+
 # Import existing backend modules
 from reddit_story_maker import RedditStoryMaker
 from story_formatter import StoryFormatter
@@ -61,6 +67,7 @@ CONFIG_EXAMPLE_PATH = os.path.join(PROJECT_ROOT, "config.json.example")
 DEFAULT_CONFIG = {
     "subreddits": ["AskReddit"],
     "request_delay": 2.0,
+    "scraping_method": "auto",
     "filters": {
         "min_upvotes": 50, "min_comments": 10, "max_comments": 999999999,
         "min_age_hours": 1, "max_age_hours": 168,
@@ -369,7 +376,10 @@ async def update_config(update: dict):
 async def reddit_session_status():
     from reddit_session_warmer import get_session_warmer
     warmer = get_session_warmer()
-    return warmer.get_session_info()
+    info = warmer.get_session_info()
+    config = _load_config()
+    info["scraping_method"] = config.get("scraping_method") or config.get("reddit", {}).get("scraping_method", "auto")
+    return info
 
 
 @app.post("/api/reddit/warmup")
@@ -395,7 +405,7 @@ async def discover_posts(sort: str = "hot"):
 
         all_posts = []
         for subreddit in subreddits:
-            posts = maker.fetch_subreddit_posts(subreddit=subreddit, limit=25, sort=sort)
+            posts = await asyncio.to_thread(maker.fetch_subreddit_posts, subreddit=subreddit, limit=25, sort=sort)
             for post in posts:
                 meets, reason = maker._meets_filters(post)
                 created_utc = post.get("created_utc", 0)

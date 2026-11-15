@@ -11,10 +11,18 @@ import os
 import sys
 import json
 import time
+import asyncio
+import concurrent.futures
 from datetime import datetime, timezone
 from typing import Dict, Optional, Tuple, Any
 
 import requests
+
+if sys.platform == "win32":
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    except Exception:
+        pass
 
 if getattr(sys, "frozen", False):
     PROJECT_ROOT = os.path.dirname(sys.executable)
@@ -23,6 +31,27 @@ else:
 
 SESSION_FILE_PATH = os.path.join(PROJECT_ROOT, "reddit_session.json")
 MAX_SESSION_AGE_HOURS = 12
+
+
+def _run_in_isolated_thread(fn, *args, **kwargs):
+    """Ensure fn runs in a dedicated thread with WindowsProactorEventLoopPolicy."""
+    def _runner():
+        if sys.platform == "win32":
+            try:
+                asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+            except Exception:
+                pass
+        return fn(*args, **kwargs)
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(_runner).result()
+    return _runner()
 
 
 class RedditSessionWarmer:
@@ -75,6 +104,15 @@ class RedditSessionWarmer:
         and save cookies + User-Agent to disk.
         Returns (success, message).
         """
+        return _run_in_isolated_thread(self._warmup_session_impl, force_refresh, headless)
+
+    def _warmup_session_impl(self, force_refresh: bool = False, headless: bool = True) -> Tuple[bool, str]:
+        if sys.platform == "win32":
+            try:
+                asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+            except Exception:
+                pass
+
         # Check if current session is already valid and force_refresh is False
         if not force_refresh:
             info = self.get_session_info()
@@ -93,9 +131,18 @@ class RedditSessionWarmer:
             with sync_playwright() as p:
                 print("[RedditSessionWarmer] Launching headless browser...")
                 browser = None
-                # Try Chromium first, fallback to Firefox
+                default_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                # Try Chromium with stealth flags first, fallback to Firefox
                 try:
-                    browser = p.chromium.launch(headless=headless)
+                    browser = p.chromium.launch(
+                        headless=headless,
+                        args=[
+                            "--disable-blink-features=AutomationControlled",
+                            "--no-sandbox",
+                            "--disable-dev-shm-usage",
+                        ],
+                        ignore_default_args=["--enable-automation"]
+                    )
                 except Exception as ex1:
                     print(f"[RedditSessionWarmer] Chromium launch failed ({ex1}), trying Firefox...")
                     try:
@@ -103,34 +150,47 @@ class RedditSessionWarmer:
                     except Exception as ex2:
                         return False, f"Could not launch browser. Try running: playwright install. Error: {ex2}"
 
-                context = browser.new_context(
-                    viewport={"width": 1280, "height": 800},
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                    extra_http_headers={
-                        "Accept-Language": "en-US,en;q=0.9",
-                    }
-                )
+                try:
+                    context = browser.new_context(
+                        viewport={"width": 1280, "height": 800},
+                        user_agent=default_ua,
+                        locale="en-US",
+                        extra_http_headers={
+                            "Accept-Language": "en-US,en;q=0.9",
+                        }
+                    )
 
-                page = context.new_page()
+                    page = context.new_page()
+                    # Mask navigator.webdriver
+                    try:
+                        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                    except Exception:
+                        pass
 
-                print("[RedditSessionWarmer] Navigating to https://www.reddit.com...")
-                response = page.goto("https://www.reddit.com/", wait_until="domcontentloaded", timeout=25000)
+                    print("[RedditSessionWarmer] Navigating to https://www.reddit.com...")
+                    response = page.goto("https://www.reddit.com/", wait_until="domcontentloaded", timeout=25000)
 
-                status_code = response.status if response else 0
-                title = page.title()
-                print(f"[RedditSessionWarmer] Page loaded (Status: {status_code}, Title: '{title[:40]}')")
+                    status_code = response.status if response else 0
+                    title = page.title()
+                    print(f"[RedditSessionWarmer] Page loaded (Status: {status_code}, Title: '{title[:40]}')")
 
-                if status_code in (403, 429):
-                    browser.close()
-                    return False, f"Reddit blocked browser navigation with status {status_code}"
+                    if status_code in (403, 429):
+                        return False, f"Reddit blocked browser navigation with status {status_code}"
 
-                # Short sleep to allow session cookie initialization
-                time.sleep(2.5)
+                    # Allow session cookie initialization
+                    time.sleep(2.5)
 
-                cookies = context.cookies("https://www.reddit.com")
-                user_agent = page.evaluate("navigator.userAgent")
-
-                browser.close()
+                    cookies = context.cookies()
+                    user_agent = default_ua
+                    try:
+                        eval_ua = page.evaluate("navigator.userAgent")
+                        if eval_ua:
+                            user_agent = eval_ua
+                    except Exception:
+                        pass
+                finally:
+                    if browser:
+                        browser.close()
 
                 if not cookies:
                     return False, "No cookies obtained from Reddit page visit"
@@ -149,8 +209,9 @@ class RedditSessionWarmer:
                 return True, f"Session warmed successfully ({len(cookies)} cookies saved)"
 
         except Exception as e:
-            print(f"[RedditSessionWarmer] ✗ Warmup failed: {e}")
-            return False, f"Session warmup exception: {str(e)}"
+            err_msg = f"{type(e).__name__}: {str(e).strip() or repr(e)}"
+            print(f"[RedditSessionWarmer] ✗ Warmup failed: {err_msg}")
+            return False, f"Session warmup exception: {err_msg}"
 
     def get_requests_session(self, force_refresh: bool = False) -> Tuple[requests.Session, bool]:
         """
